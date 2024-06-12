@@ -1,11 +1,15 @@
 <?php
 require_once('functions.php');
+require('vendor/autoload.php');
+session_start();
 $user = null;
-if(isset($_GET['id'])) {
-    $users = getUser($_GET['id']);
-    if(!empty($users)) {
-        $user = $users[0];
-    }
+if(!isset($_SESSION['email'])) {
+    header('location: index.php');
+    exit();
+    // $users = getUser($_GET['id']);
+    // if(!empty($users)) {
+    //     $user = $users[0];
+    // }
 }
 ?>
 
