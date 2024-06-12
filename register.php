@@ -16,7 +16,9 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
         if ($passwordStrength['score'] < 2) {
             echo "Le mot de passe est trop faible. Veuillez choisir un mot de passe plus fort.";
         } else {
-            $result = saveUser($username, $email, $password);
+            // Hashage du mot de passe
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $result = saveUser($username, $email, $hashedPassword);
             if($result === true) {
                 header('Location: index.php');
                 exit;
@@ -29,6 +31,7 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
     }
 }
 ?>
+
 
 <html lang="fr">
 <head>

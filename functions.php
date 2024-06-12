@@ -3,7 +3,7 @@
 function connectDb()
 {
     try {
-        $conn = new PDO("mysql:host=127.0.0.1;dbname=authentication", 'root', '');
+        $conn = new PDO("mysql:host=127.0.0.1;dbname=authentication", 'root', 'root');
         // set the PDO error mode to exception
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $conn;
@@ -13,14 +13,23 @@ function connectDb()
     }
 }
 
-function logUser($email, $password)
-{
-    $connexion = connectDb();
-    $sql = 'SELECT * FROM users WHERE email = "' . $email . '" AND password = "' .$password . '"';
-    $stmt = $connexion->prepare($sql);
-    $stmt->execute();
+function logUser($email, $password) {
+    try {
+        $connexion = connectDb();
+        $sql = 'SELECT * FROM users WHERE email = :email';
+        $stmt = $connexion->prepare($sql);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
+        if ($user && password_verify($password, $user['password'])) {
+            return $user;
+        } else {
+            return null;
+        }
+    } catch (PDOException $e) {
+        return null;
+    }
 }
 
 function getUser($id) {
@@ -32,10 +41,17 @@ function getUser($id) {
     return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
 
-function saveUser($email, $username, $password) {
-    $connexion = connectDb();
-    $sql = 'INSERT INTO users(username,email,password) VALUES("'.$email.'","'.$username.'","'.$password.'")';
-    $stmt = $connexion->prepare($sql);
+function saveUser($username, $email, $hashedPassword) {
+    try {
+        $connexion = connectDb();
+        $sql = 'INSERT INTO users (username, email, password) VALUES (:username, :email, :password)';
+        $stmt = $connexion->prepare($sql);
+        $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':password', $hashedPassword);
 
-    return $stmt->execute();
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        return $e->getMessage();
+    }
 }
