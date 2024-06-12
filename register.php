@@ -4,30 +4,43 @@ require 'vendor/autoload.php';
 
 use ZxcvbnPhp\Zxcvbn;
 
-if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['password'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
     $password = $_POST['password'];
+    $recaptcha_response = $_POST['g-recaptcha-response'];
 
-    if ($username && $email && $password) {
+    if ($username && $email && $password && $recaptcha_response) {
         $zxcvbn = new Zxcvbn();
         $passwordStrength = $zxcvbn->passwordStrength($password);
-        // Il faut au moins un mdp de force moyenne
+
+        // Vérification de la force du mot de passe
         if ($passwordStrength['score'] < 2) {
             echo "Le mot de passe est trop faible. Veuillez choisir un mot de passe plus fort.";
         } else {
-            // Hashage du mot de passe
-            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-            $result = saveUser($username, $email, $hashedPassword);
-            if($result === true) {
-                header('Location: index.php');
-                exit;
+            // Vérification du CAPTCHA
+            $recaptcha_secret = '6Lf2J_cpAAAAAJWkRER3202bxTD1WO-HdH7pSNEU';
+            $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$recaptcha_secret&response=$recaptcha_response");
+            $responseKeys = json_decode($response, true);
+
+            if (intval($responseKeys["success"]) !== 1) {
+                echo 'Veuillez compléter le CAPTCHA.';
             } else {
-                echo "Une erreur est survenue " . htmlspecialchars($result);
+                // Hashage du mot de passe
+                $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+
+                // Sauvegarde de l'utilisateur
+                $result = saveUser($username, $email, $hashedPassword);
+                if ($result === true) {
+                    header('Location: index.php');
+                    exit;
+                } else {
+                    echo "Une erreur est survenue : " . htmlspecialchars($result);
+                }
             }
         }
     } else {
-        echo "Invalid input";
+        echo "Veuillez entrer des informations valides.";
     }
 }
 ?>
@@ -41,11 +54,13 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
     <title>Ma super app sécurisée - Inscription</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <!-- reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 <div class="container">
     <h1>Inscription</h1>
-    <form action="/register.php" method="post" class="needs-validation" novalidate>
+    <form action="/tp-owasp/register.php" method="post" class="needs-validation" novalidate>
         <div class="form-group">
             <label for="username">Nom d'utilisateur :</label>
             <input type="text" class="form-control" id="username" name="username" required>
@@ -78,6 +93,7 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
                 S'il vous plaît confirmez votre mot de passe.
             </div>
         </div>
+        <div class="g-recaptcha" data-sitekey="6Lf2J_cpAAAAAFdt7fFEsMTqDen_ZAfJmtGz7Jqa"></div>
         <button type="submit" class="btn btn-primary">S'inscrire</button>
     </form>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
