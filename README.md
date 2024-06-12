@@ -1,3 +1,3 @@
-# Vulnerable authentication
+# TP OWASP YANNIS ZEMIRLINE et Romain GUINAIS
 
-Voluntarily vulnerable application to fix by students
+Identifiants MySql: 'root' ''
