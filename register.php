@@ -45,7 +45,7 @@ if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['passwor
 <body>
 <div class="container">
     <h1>Inscription</h1>
-    <form action="/tp-owasp/register.php" method="post" class="needs-validation" novalidate>
+    <form action="/register.php" method="post" class="needs-validation" novalidate>
         <div class="form-group">
             <label for="username">Nom d'utilisateur :</label>
             <input type="text" class="form-control" id="username" name="username" required>
